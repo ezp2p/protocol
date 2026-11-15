@@ -32,6 +32,23 @@ No STUN or TURN server run by a third party. Each side offers the addresses of i
 advertised addresses (its signed address record, part 03) at the `udp` port it gave. One UDP port carries all of a
 Puddle's calls (ICE multiplexes them by username fragment).
 
+## A phone's leg (part 04)
+
+A phone's calls are carried by its Puddle like any other; the phone has a WebRTC leg of its own to its Puddle for the
+sound. That leg is signalled over the owner API, in requests the phone signs with its device key (part 04), each
+answered with the Puddle's receipt:
+
+- The phone that starts (`POST /api/v1/calls/start`) or answers (`POST /api/v1/calls/{call}/accept`) a call has it. Only
+  that phone may set up a leg for it, and no other device's sound is sent.
+- `POST /api/v1/calls/{call}/media` with `{sdp}`: the phone's offer, one Opus track (payload type 111), candidates
+  included. Answered `200 {sdp, udp}`: the Puddle's answer and the UDP port its calls use, the same one friends reach.
+  `400 not_a_phone` without a device signature, `404 no_call` from another phone or for a call that is over, `400
+  bad_sdp`. Asking again replaces the leg.
+- The phone adds, as a candidate at `udp`, the address it reaches its Puddle at. No STUN or TURN here either.
+- The fingerprints are taken only from these signed exchanges, as on the stream, which binds the leg to the pairing.
+- The Puddle passes Opus frames between the leg and the friend's connection without decoding them, on each connection's
+  own RTP clock.
+
 ## Levee (part 06), later
 
 A Puddle that can't be reached directly needs a relay, which a Levee would be: like a TURN server, it forwards the
