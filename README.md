@@ -23,6 +23,7 @@ their own pace, still understand each other.
   - [`05-ponds.md`](spec/05-ponds.md): a Puddle and a Pond
   - [`06-levee.md`](spec/06-levee.md): a Puddle behind a Levee, and what that does to receipts
   - [`07-drip.md`](spec/07-drip.md): what Drip can take from all this
+  - [`08-calls.md`](spec/08-calls.md): live voice between friends
 - `vectors/`: test vectors: fixed keys, ids, signed requests and receipts, each with the answer an implementation must
   give. Every implementation's tests load them (Puddle: `protocol_vectors` test). A change to the wire changes a vector.
 
@@ -41,3 +42,4 @@ text; as parts settle here, those documents point here instead of repeating it.
 | devices | built (phase 7) | - | - | - |
 | ponds | built (member side) | built | passes them on | - |
 | levee | designed here | - | designed here | - |
+| calls | built: one to one (phase 8.1) | - | will relay them | - |
