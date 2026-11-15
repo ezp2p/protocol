@@ -63,7 +63,8 @@ announced. Nothing in the existing receipt changes; one new header and one new a
 
 ## Ponds should sign receipts
 
-See `spec/05-ponds.md`. Proposed, not built: Ponds answer members with the same `X-Puddle-Receipt` Puddles use, signed
-by the Pond's key. Then a Puddle stops pinning a Pond's certificate, and a Pond can renew its certificate (Let's
-Encrypt, say) without cutting everyone off. Advertised as the feature `receipts`, so Puddles keep pinning Ponds that
-don't have it.
+See `spec/05-ponds.md`. Built: Ponds answer members with the same `X-Puddle-Receipt` Puddles use, signed by the
+Pond's key. A Puddle stops pinning a Pond's certificate, and a Pond can renew its certificate (Let's Encrypt, say)
+without cutting everyone off. Advertised as the feature `receipts` (protocol 3 of `/pond/v1`), so Puddles keep
+pinning Ponds that don't have it. Pond checks itself against the vectors too, so there are now two implementations of
+part 02 that agree.

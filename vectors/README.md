@@ -11,7 +11,7 @@ beside yours (`../protocol/vectors`).
 Keys are given as hex in the files; in the headers they are as `spec/02-signatures.md` says.
 
 They were made by Puddle (`tests/protocol_vectors_test.c`, with `PUDDLE_WRITE_VECTORS=<this folder>`), which checks
-itself against them on every build. Making them again changes every signature (new nonces, a new identity), so it is
+itself against them on every build. Pond checks itself against `signatures.json` too (`tests/protocol_test.cpp`). Making them again changes every signature (new nonces, a new identity), so it is
 done only when the protocol changes, and every implementation then checks the new ones.
 
 Not covered yet: key chains (an inception and a rotation, and broken ones), address records, Pond ids, Levee custody

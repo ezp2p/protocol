@@ -16,20 +16,26 @@ through it, and the Pond never calls a Puddle. The routes are `/pond/v1/...`; Po
   always makes the connection, this works from behind NAT and through a Levee.
 - **What a Pond can do** is in `/pond/v1/info`: `protocol` (a number) and `features` (`files`, ...).
 
-## Trust today, and the change proposed here
+## Proving who answers: receipts from Ponds
 
-Today a Puddle trusts a Pond the way it once trusted Puddles: it **pins the Pond's TLS certificate** at join and refuses
-any other (`certificate_changed`). A renewed certificate (Let's Encrypt every 90 days, say) cuts every member off until
-they join again.
+Protocol 3 of `/pond/v1`, the feature `receipts`. The Pond's `pond` object in `/info` (and in a join's answer) gives its
+Ed25519 public key as `key` (hex); its SHA-256, in base32, is the Pond's id, so a Puddle can check it belongs.
 
-**Proposed (protocol 2 of `/pond/v1`, feature `receipts`):** a Pond signs a receipt (part 02) on every answer to an
-authenticated member, with its Pond key, over its own certificate. A Puddle that sees `receipts` in `features`:
+A Pond with `receipts` signs a receipt (part 02) on **every answer to an authenticated member**, and on the answer to a
+**join that worked**, with its key, over its own TLS certificate. Nothing anyone could be sent carries one: not the
+plain `404`, nor a join that failed for any reason. A Puddle that sees `receipts` in `features`:
 
-- checks the receipt on every answer (the Pond's id and key are those from join), and
-- stops pinning: a new certificate is simply proven again by the next receipt.
+- keeps the key, and from then on **checks the receipt on every answer**, believing it only over the certificate the
+  receipt names;
+- **stops pinning**: shown a certificate the Pond hasn't proven, it asks `GET /pond/v1/info` over it (the handshake:
+  it changes nothing) and, if the receipt names that certificate, carries on with it. If it can't be proven, it sends
+  nothing (Puddle shows this as `not_proven`);
+- treats the plain, unsigned `404`, over a certificate the Pond has proven, as the Pond no longer having it as a member;
+- never goes back to pinning: once a Pond signs, a later answer saying otherwise is not believed.
 
-The Pond's `GET /pond/v1/info` doubles as the handshake. A Pond without the feature is pinned as today. This needs no
-new route, only the header Pond already has the pieces for (its key, its certificate).
+A Pond without the feature is pinned to the certificate seen at join, as before (`certificate_changed` when another is
+shown). A Puddle that joined it then learns its key from the first `/info` that offers `receipts`, over the pinned
+certificate. Pond reads its certificate once at start, so the `fp` it signs over is the one it serves.
 
 ## Later (protocol, not built)
 

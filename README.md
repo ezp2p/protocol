@@ -36,7 +36,7 @@ text; as parts settle here, those documents point here instead of repeating it.
 |---|---|---|---|---|
 | identity, chains | built | built (its own code) | not built | - |
 | request signatures | built | built (its own code) | not built | - |
-| receipts | built (phase 6) | **not yet**: a Puddle pins a Pond's certificate | designed here | - |
+| receipts | built (phase 6) | built (protocol 3, feature `receipts`) | designed here | - |
 | streams | built | - | passes them on | - |
 | devices | built (phase 7) | - | - | - |
 | ponds | built (member side) | built | passes them on | - |
