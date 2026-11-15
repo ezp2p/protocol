@@ -1,4 +1,4 @@
-# 08. Calls: live voice between friends
+# 08. Calls: live voice between friends, and in groups
 
 Puddle's `docs/calls.md` is the fuller design. What every implementation must agree on is here.
 
@@ -40,14 +40,44 @@ answered with the Puddle's receipt:
 
 - The phone that starts (`POST /api/v1/calls/start`) or answers (`POST /api/v1/calls/{call}/accept`) a call has it. Only
   that phone may set up a leg for it, and no other device's sound is sent.
-- `POST /api/v1/calls/{call}/media` with `{sdp}`: the phone's offer, one Opus track (payload type 111), candidates
-  included. Answered `200 {sdp, udp}`: the Puddle's answer and the UDP port its calls use, the same one friends reach.
+- `POST /api/v1/calls/{call}/media` with `{sdp}`: the phone's offer, one Opus track (payload type 111) and a data channel
+  `frames` (unordered, no retransmissions: used in a group call, below), candidates included. Answered `200 {sdp, udp}`: the Puddle's answer and the UDP port its calls use, the same one friends reach.
   `400 not_a_phone` without a device signature, `404 no_call` from another phone or for a call that is over, `400
   bad_sdp`. Asking again replaces the leg.
 - The phone adds, as a candidate at `udp`, the address it reaches its Puddle at. No STUN or TURN here either.
 - The fingerprints are taken only from these signed exchanges, as on the stream, which binds the leg to the pairing.
 - The Puddle passes Opus frames between the leg and the friend's connection without decoding them, on each connection's
   own RTP clock.
+
+## Group calls (part 03)
+
+A call in a group is a WebRTC connection between each pair of the people in it, over the streams the group already has (a
+friendship, or a group-only stream). Every request below is signed by its sender and answered with a receipt, and comes
+from a member of `group` to another member (`403 not_member` otherwise). `call` is 26 characters of base32 (16 random
+bytes), chosen by whoever started it. At most 8 are in a call.
+
+- `POST /stream/v1/call/group/join` with `{call, group, seq}`: the sender is in that call, and in no other call of the
+  group. Sent to every member on joining, and again every 20 seconds while in it; a member not heard from in three of
+  those, with no connection up, has gone. Answered `200 {in, call?}`: `in` says whether the recipient is in the same call;
+  `call`, if present, is the id of another call the recipient knows of in the group, smaller than this one. A member that
+  learns of a call in the group with a smaller id than its own moves to it, so two started at once become one. A recipient
+  not in the call, and in no other, may ring its owner.
+- `POST /stream/v1/call/group/leave` with `{call, group, seq}`: the sender left. Sent to every member. `204`.
+- `seq` is a number that only goes up from each sender (its clock in microseconds, or one more than the last one sent).
+  A join or a leave whose `seq` is no greater than the last the recipient had from that sender in that group is ignored:
+  they go out to everyone at once and can arrive out of order.
+- For each two in the call, the one whose user id is the smaller (as bytes) offers: `POST /stream/v1/call/group/offer`
+  with `{call, group, sdp, udp}` as for a friend's offer, answered `204` (`404 no_call` if the recipient isn't in that
+  call, `409 ours_to_offer` from the larger id, `409 full`). The recipient answers once it has made its side, with `POST
+  /stream/v1/call/group/answer` and `{call, group, sdp, udp}`, answered `204` (`404 no_call` if no such offer waits). An
+  offer replaces any connection the two had; a connection lost is offered again on the next join.
+- Fingerprints are taken only from these signed requests, as for a friend's call.
+- A Puddle in a group call while a friend rings answers the friend `409 busy`, and the other way round: one call at a time.
+
+On a phone (part 04), the leg is the same. The phone's own frames go on its track and its Puddle sends them on every
+connection of the call; the others' frames come to the phone over the `frames` data channel, one message per frame:
+1 byte, the member's number in the call (its `slot` in the owner API's `members`), 4 bytes, the frame's RTP timestamp in
+that member's own count, big-endian; then the Opus frame.
 
 ## Levee (part 06), later
 
@@ -57,5 +87,4 @@ only candidates at the Levee.
 
 ## Not yet
 
-Group calls (a call per pair of members, over the group's connections) and video (a track beside the voice) are planned
-in Puddle's roadmap (phase 8) and will be added here when built.
+Video (a track beside the voice) is planned in Puddle's roadmap (phase 8) and will be added here when built.
