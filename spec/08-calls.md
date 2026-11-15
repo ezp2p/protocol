@@ -1,4 +1,4 @@
-# 08. Calls: live voice between friends, and in groups
+# 08. Calls: live voice and video between friends, and in groups
 
 Puddle's `docs/calls.md` is the fuller design. What every implementation must agree on is here.
 
@@ -6,7 +6,17 @@ Puddle's `docs/calls.md` is the fuller design. What every implementation must ag
 
 The two **Puddles**. Each passes the call to and from its owner's device (its window, or a phone over a leg of its own);
 the devices record and play. The media goes between the Puddles over **WebRTC**: ICE, DTLS-SRTP and RTP, with **Opus**
-(payload type 111, 48 kHz) for voice.
+(payload type 111, 48 kHz) for voice and **H.264** for video (below).
+
+## Media
+
+Every connection carries two tracks, by `mid`: `audio` (Opus, payload type 111) and `video` (H.264 Constrained Baseline,
+`profile-level-id=42e01f;packetization-mode=1`, payload type 96, 90 kHz), both `sendrecv`. A side sends on a track only
+from the SSRC its description names for it (`a=ssrc`); an answerer names its own in the answer. A Puddle passes whole frames
+on (for video, whole access units, reassembled from FU-A and cut again) and decodes nothing; it may restamp RTP timestamps,
+but keeps the spacing between a sender's frames. A sender sends a key frame (IDR with SPS and PPS) at least every 2
+seconds, since nothing asks for one (no PLI yet). A device with its camera off sends no video; one that has had none from
+a sender for 2 seconds shows that sender as having none.
 
 ## Setting it up: over the stream (part 03)
 
@@ -40,8 +50,10 @@ answered with the Puddle's receipt:
 
 - The phone that starts (`POST /api/v1/calls/start`) or answers (`POST /api/v1/calls/{call}/accept`) a call has it. Only
   that phone may set up a leg for it, and no other device's sound is sent.
-- `POST /api/v1/calls/{call}/media` with `{sdp}`: the phone's offer, one Opus track (payload type 111) and a data channel
-  `frames` (unordered, no retransmissions: used in a group call, below), candidates included. Answered `200 {sdp, udp}`: the Puddle's answer and the UDP port its calls use, the same one friends reach.
+- `POST /api/v1/calls/{call}/media` with `{sdp}`: the phone's offer, with an Opus track `audio` and an H.264 track
+  `video` (both `sendrecv`, each with its SSRC), seven `recvonly` H.264 tracks `v1` to `v7` (a group call's members' video,
+  below), and a data channel `frames` (unordered, no retransmissions: their sound in a group call, below), candidates
+  included. Answered `200 {sdp, udp}`: the Puddle's answer and the UDP port its calls use, the same one friends reach.
   `400 not_a_phone` without a device signature, `404 no_call` from another phone or for a call that is over, `400
   bad_sdp`. Asking again replaces the leg.
 - The phone adds, as a candidate at `udp`, the address it reaches its Puddle at. No STUN or TURN here either.
@@ -77,7 +89,8 @@ bytes), chosen by whoever started it. At most 8 are in a call.
 On a phone (part 04), the leg is the same. The phone's own frames go on its track and its Puddle sends them on every
 connection of the call; the others' frames come to the phone over the `frames` data channel, one message per frame:
 1 byte, the member's number in the call (its `slot` in the owner API's `members`), 4 bytes, the frame's RTP timestamp in
-that member's own count, big-endian; then the Opus frame.
+that member's own count, big-endian; then the Opus frame. A member's video comes on the track `v<slot>`. A Puddle gives
+each other member in the call the smallest slot not held by another member in it now, so slots stay within 1 to 7.
 
 ## Levee (part 06), later
 
@@ -87,4 +100,4 @@ only candidates at the Levee.
 
 ## Not yet
 
-Video (a track beside the voice) is planned in Puddle's roadmap (phase 8) and will be added here when built.
+Asking for a key frame (RTCP PLI), resending lost packets (NACK), and a bitrate that follows the connection.
