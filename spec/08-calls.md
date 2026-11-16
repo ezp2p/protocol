@@ -18,6 +18,10 @@ but keeps the spacing between a sender's frames. A sender sends a key frame (IDR
 seconds, since nothing asks for one (no PLI yet). A device with its camera off sends no video; one that has had none from
 a sender for 2 seconds shows that sender as having none.
 
+A third track, `screen` (H.264 as `video`, `sendrecv`), carries a shared screen, sent only while its owner shares one.
+A Puddle passes it on as it does `video`, and shows it apart from the camera. A phone's leg has no `screen` yet. A track
+whose `mid` a side does not know is left alone: nothing is sent on it, and what comes on it is dropped.
+
 ## Setting it up: over the stream (part 03)
 
 Three signed requests (part 02) between friends with an active stream, each answered with a receipt. They don't go
