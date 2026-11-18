@@ -24,6 +24,7 @@ Every party has an **Ed25519 identity**, and everything that matters is signed b
    it against a CA, and it may change at any time. Who a party is, is proven by its keys: requests carry the sender's
    signature, answers carry the responder's receipt (part 02), which also names the certificate the connection showed,
    so someone in the middle is caught. (A Puddle still pins a Pond's certificate until Ponds sign receipts: part 05.)
+   **Changing:** part 09 takes certificates out of the protocol entirely, sealing bodies to keys instead.
 2. **Strangers learn nothing.** A request that fails any check up to and including its signature is answered `404`,
    exactly as a path that does not exist, never `401` or `403`. Only an authenticated sender is told what went wrong.
    Routes that must answer everyone the same (asking for a stream) never sign their answer.

@@ -24,6 +24,7 @@ their own pace, still understand each other.
   - [`06-levee.md`](spec/06-levee.md): a Puddle behind a Levee, and what that does to receipts
   - [`07-drip.md`](spec/07-drip.md): what Drip can take from all this
   - [`08-calls.md`](spec/08-calls.md): live voice and video between friends, and in groups
+  - [`09-sealing.md`](spec/09-sealing.md): **design, not built**: bodies sealed to keys, so TLS is transport only
 - `vectors/`: test vectors: fixed keys, ids, signed requests and receipts, each with the answer an implementation must
   give. Every implementation's tests load them (Puddle: `protocol_vectors` test). A change to the wire changes a vector.
 
