@@ -10,6 +10,10 @@ on the Puddle**: a Levee holds only what is in transit, decrypts nothing and sig
 The design draft with its open questions is Puddle's `docs/levee.md`. This part settles what the wire needs, above all
 how a Levee fits **proving who answers** (part 02), which it would otherwise break.
 
+> **Being simplified by part 09.** Receipts no longer name a certificate and every body is sealed to the Puddle's key, so
+> a Levee is just something that carries sealed requests and answers: the sections below that sign over the Levee's
+> certificate, and the handshake through a Levee, go when Levee is built. Custody receipts keep their place without `fp`.
+
 ## The problem receipts make
 
 A sender checks that a receipt names the certificate *it* saw on the connection. Behind a Levee the sender's TLS

@@ -34,17 +34,18 @@ Only then may it say what is wrong: `401 clock_skew` (with its `now`) when `ts` 
 
 Every answer to a request that authenticated, from someone the responder already holds a record of, carries:
 
-    X-Puddle-Receipt: v1 id=<responder id>; kid=<key id>; fp=<hex>; sig=<base64>
+    X-Puddle-Receipt: v2 id=<responder id>; kid=<key id>; sig=<base64>
 
-`fp` is the hex SHA-256 of **the TLS certificate on this connection, as the responder sees its own side** (normally its
-own certificate; behind a Levee, the Levee's: part 06). `sig` is Ed25519 by the responder's current key over:
+`sig` is Ed25519 by the responder's current key over:
 
-    puddle-receipt-v1
+    puddle-receipt-v2
     <the responder's id>
     <the request's nonce>
     <the HTTP status>
-    <hex SHA-256 of the answer's body; of nothing for an empty one>
-    <fp>
+    <hex SHA-256 of the answer's body exactly as sent (sealed, part 09); of nothing for an empty one>
+
+No certificate: TLS only carries the bytes (part 09), so a receipt holds over any connection, a reverse proxy included.
+(`v1` receipts named the certificate; nothing makes or accepts them any more.)
 
 **No receipt** on: the plain `404` a stranger gets; any answer to a stranger, even one who proved a request with a
 chain of their own; and the routes that must answer everyone alike (a stream request and its status), so that a
@@ -54,10 +55,9 @@ An answer sent straight from a file (any part of it, with `Range`) is signed ove
 
 ### Checking a receipt (MUST, for any caller that holds the responder's key)
 
-Accept an answer only if the receipt is there, names the id and key the caller holds for the responder, carries this
-request's nonce, the status and body received, and **the fingerprint of the certificate the caller saw on this
-connection**. That last check catches someone in the middle: they can pass a request to the real party and its signed
-answer back, but the real party signs its own side of a different connection.
+Accept an answer only if the receipt is there, names the id and key the caller holds for the responder, and carries
+this request's nonce and the status and body received. Someone in the middle can pass a request on and an answer back,
+but can't read either (part 09) or answer in the responder's name.
 
 What a caller makes of the result:
 
@@ -67,14 +67,8 @@ What a caller makes of the result:
 | good receipt, any other status | refused, in their name: final |
 | no receipt (a plain `404` and the like) | not them, or they don't know us: **not delivered**, try again later |
 | another key, or a signature that doesn't check | not proven: **not delivered** |
-| good signature, other certificate | intercepted: **not delivered** |
 
-### The handshake
-
-A receipt arrives after the request has gone. So before sending anything that needs an existing relationship, a caller
-that holds the responder's key sends a request that carries nothing (`GET /stream/v1/hello` between Puddles,
-`GET /device/v1/status` from a phone) and checks its receipt. That proves which certificate is the responder's; the real
-request then goes only over a connection showing that certificate. A proof may be kept for ten minutes, each good
-receipt renewing it.
+There is no handshake before a request: what it carries is sealed to the key the caller holds (part 09), so it can go
+straight out over any connection.
 
 Vectors: `vectors/signatures.json` (signed requests and receipts, with what a checker must say about each).

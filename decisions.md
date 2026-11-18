@@ -68,3 +68,15 @@ Pond's key. A Puddle stops pinning a Pond's certificate, and a Pond can renew it
 without cutting everyone off. Advertised as the feature `receipts` (protocol 3 of `/pond/v1`), so Puddles keep
 pinning Ponds that don't have it. Pond checks itself against the vectors too, so there are now two implementations of
 part 02 that agree.
+
+## TLS is transport only (2026-11-18, design: `spec/09-sealing.md`)
+
+Decided with the owner: **nothing in the protocol may depend on a TLS certificate.** Most people will run a Puddle or
+a Pond behind a reverse proxy, many on Let's Encrypt certificates that change every few months, and some will do
+stranger things still. Receipts naming the certificate (part 02) made each of those break: a proxy looks like
+interception, and a renewal needs a restart.
+
+The certificate was only in receipts because TLS was the only thing keeping bodies private. So the fix is to make the
+keys do that too: every request body is sealed (HPKE, RFC 9180) to the recipient's encryption key, every answer back to
+the caller, and receipts stop naming a certificate. Then a certificate can be anything, and change any time, and a
+proxy or a Levee sees routes and sizes but no contents. Open questions, with recommendations, are at the end of part 09.

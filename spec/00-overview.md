@@ -20,10 +20,10 @@ Every party has an **Ed25519 identity**, and everything that matters is signed b
 
 ## Principles (every part follows these)
 
-1. **Keys, not certificates.** TLS is always used and only encrypts. Every party makes its own certificate, nobody checks
-   it against a CA, and it may change at any time. Who a party is, is proven by its keys: requests carry the sender's
-   signature, answers carry the responder's receipt (part 02), which also names the certificate the connection showed,
-   so someone in the middle is caught. (A Puddle still pins a Pond's certificate until Ponds sign receipts: part 05.)
+1. **Keys, not certificates. TLS is transport only.** Nothing names, pins, remembers or compares a certificate: any will
+   do, self-signed, Let's Encrypt or a reverse proxy's, changed whenever. Who a party is, is proven by its keys
+   (requests carry the sender's signature, answers the responder's receipt: part 02), and what they say is private
+   because it is sealed to the other end's key (part 09).
 2. **Strangers learn nothing.** A request that fails any check up to and including its signature is answered `404`,
    exactly as a path that does not exist, never `401` or `403`. Only an authenticated sender is told what went wrong.
    Routes that must answer everyone the same (asking for a stream) never sign their answer.
@@ -42,7 +42,7 @@ Every party has an **Ed25519 identity**, and everything that matters is signed b
 - A party that has optional parts says so: a Pond's `/info` carries `protocol` (a number that goes up with each
   addition) and `features` (names: `files`, `receipts`, ...). A caller checks these before using an addition, rather
   than guessing from a `404`, which is also what a refusal looks like.
-- Signed strings carry their own version label (`puddle-request-v1`, `puddle-receipt-v1`, `puddle-address-v1`), so a
+- Signed strings carry their own version label (`puddle-request-v1`, `puddle-receipt-v2`, `puddle-seal-v1`, `puddle-address-v1`), so a
   signature made for one purpose can never be taken for another.
 
 ## Encodings (everywhere)

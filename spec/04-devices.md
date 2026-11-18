@@ -8,17 +8,17 @@ recipient), and believes only answers carrying the Puddle's receipt. There is no
 
 1. The owner asks their Puddle for a link (`POST /api/v1/devices/pair`, owner token only):
 
-       puddle-pair://<address>?id=<the Puddle's user id>&secret=<32 hex: 128 random bits>
+       puddle-pair://<address>?id=<the Puddle's user id>&k=<its sealing key, 52 base32>&secret=<32 hex: 128 random bits>
 
    The secret is good for one use within ten minutes; asking again replaces it.
-2. The phone makes its key and sends `POST /device/v1/pair` with `{"name", "key": <64 hex>, "secret"}`, **signed by
+2. The phone makes its key and sends `POST /device/v1/pair`, sealed to `k` (part 09), with `{"name", "key": <64 hex>, "secret"}`, **signed by
    that key**. A wrong, spent or stale secret is the usual `404`.
 3. The answer (`202`) carries `device`, `check`, and `puddle: {id, chain}`, with a receipt. The phone checks the chain
    belongs to the id in the link, then the receipt against the chain's current key: from here it knows its Puddle by
    keys. It is **pending**.
 4. The owner sees the name and the six-digit check code (part 01), the phone shows the same code, and the owner accepts
    (`POST /api/v1/devices/{device}/accept`) or declines.
-5. The phone learns which from `GET /device/v1/status` (any device on the list), which is also its **handshake**: it
+5. The phone learns which from `GET /device/v1/status` (any device on the list): it
    carries nothing, and its answer brings the Puddle's chain, so a phone learns a key roll there.
 
 ## After pairing

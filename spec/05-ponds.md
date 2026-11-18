@@ -7,7 +7,9 @@ through it, and the Pond never calls a Puddle. The routes are `/pond/v1/...`; Po
 
 ## Joining and being a member
 
-- **Invite links**: `pond://<address>?invite=<26 base32>`. A used-up, expired, revoked or unknown invite is `404`.
+- **Invite links**: `pond://<address>?invite=<26 base32>&k=<the Pond's sealing key, 52 base32>` (part 09: the join is
+  sealed to it). A used-up, expired, revoked or unknown invite is `404`. An invite without `k` is the old kind and is
+  refused by the Puddle.
 - **Joining** (`POST /pond/v1/join`): `{invite, chain, profile}`, signed for recipient `*` (the Puddle doesn't know the
   Pond's id yet), proven by the chain in the body. The answer carries the Pond's id, name, channels and event cursor.
 - **Every other route** is signed for the Pond's id by the member's current key (part 02). A non-member gets `404`.
@@ -16,26 +18,21 @@ through it, and the Pond never calls a Puddle. The routes are `/pond/v1/...`; Po
   always makes the connection, this works from behind NAT and through a Levee.
 - **What a Pond can do** is in `/pond/v1/info`: `protocol` (a number) and `features` (`files`, ...).
 
-## Proving who answers: receipts from Ponds
+## Proving who answers, and sealing
 
-Protocol 3 of `/pond/v1`, the feature `receipts`. The Pond's `pond` object in `/info` (and in a join's answer) gives its
-Ed25519 public key as `key` (hex); its SHA-256, in base32, is the Pond's id, so a Puddle can check it belongs.
+Protocol 5 of `/pond/v1`, the features `receipts` and `sealed`. The Pond's `pond` object in `/info` (and in a join's
+answer) gives its Ed25519 public key as `key` (hex), whose SHA-256 in base32 is the Pond's id, and its sealing key as
+`seal_key` (hex), derived from the same seed (part 09). The join's `seal_key` must be the invite's `k`.
 
-A Pond with `receipts` signs a receipt (part 02) on **every answer to an authenticated member**, and on the answer to a
-**join that worked**, with its key, over its own TLS certificate. Nothing anyone could be sent carries one: not the
-plain `404`, nor a join that failed for any reason. A Puddle that sees `receipts` in `features`:
-
-- keeps the key, and from then on **checks the receipt on every answer**, believing it only over the certificate the
-  receipt names;
-- **stops pinning**: shown a certificate the Pond hasn't proven, it asks `GET /pond/v1/info` over it (the handshake:
-  it changes nothing) and, if the receipt names that certificate, carries on with it. If it can't be proven, it sends
-  nothing (Puddle shows this as `not_proven`);
-- treats the plain, unsigned `404`, over a certificate the Pond has proven, as the Pond no longer having it as a member;
-- never goes back to pinning: once a Pond signs, a later answer saying otherwise is not believed.
-
-A Pond without the feature is pinned to the certificate seen at join, as before (`certificate_changed` when another is
-shown). A Puddle that joined it then learns its key from the first `/info` that offers `receipts`, over the pinned
-certificate. Pond reads its certificate once at start, so the `fp` it signs over is the one it serves.
+- **Every request is sealed** to `seal_key` (part 09); one that isn't is `400 not_sealed` once it has authenticated.
+- **Every answer to an authenticated member**, and the answer to a join that worked, is sealed back and carries the Pond's
+  receipt (part 02, v2): a Puddle believes an answer only with it.
+- **A request the Pond opened but refused** (someone who isn't a member) gets the same `404` as an unknown path, sealed
+  under that request's key and unsigned. Only the Pond could seal it, so a removed member can tell it is the Pond saying
+  so; a plain `404` (or one that won't open) proves nothing, and the Puddle shows the Pond as `not_proven` and keeps
+  trying.
+- **No certificate** is pinned, proven or compared. A Pond behind a reverse proxy, or renewing a Let's Encrypt
+  certificate, needs nothing from its members or from them.
 
 ## Later (protocol, not built)
 
