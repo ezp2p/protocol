@@ -1,11 +1,12 @@
-# 09. Sealing: privacy that doesn't lean on TLS (design, not built)
+# 09. Sealing: privacy that doesn't lean on TLS
 
-**Status:** design for review (2026-11-18). Nothing here is built. When it is, parts 00, 02, 03, 04, 05 and 06 change
-as "What changes in the other parts" says, and this part becomes the description of what is.
+**Status:** built in Puddle (streams, phones, its Pond client) and Pond (protocol 5, feature `sealed`), 2026-11-18. Parts
+00, 02, 03, 04 and 05 describe it; part 06 (Levee, not built) is to be simplified by it. The decisions at the end were
+taken as recommended.
 
 ## Why
 
-Today TLS does one job nobody checks: it is the only thing keeping what is sent private. Bodies are not encrypted
+Before this, TLS did one job nobody checked: it was the only thing keeping what is sent private. Bodies are not encrypted
 with anyone's keys yet (Puddle's `docs/identity.md`, "Encryption", was planned and never built). Certificates are
 self-signed and nobody verifies them, so anyone in the middle could show their own and read everything. What stops
 that today is the `fp` in every receipt (part 02): the answer names the certificate the responder served, and the
@@ -39,8 +40,8 @@ certificate works: self-signed, Let's Encrypt, a proxy's, one that changes every
 | Levee | its key | its own, in its chain | the Puddle's address record that names the Levee |
 
 A party that rolls its keys (part 01) rolls its sealing key with them; a sender sealing to a key the recipient has
-just retired gets `409 stale_key` (signed, so only someone the recipient knows learns it) and fetches the new chain
-the usual way before trying again.
+just retired gets `409 stale_key`, unsealed but signed, with the recipient's chain in it (`chain`), so only someone the
+recipient knows learns it, and the sender can take the new keys and try again.
 
 ## Sealing a request
 
@@ -76,14 +77,17 @@ answer key, the nonce being the record's index as a 12-byte big-endian number, a
 followed by `0` for every record but the last and `1` for the last one, so an answer cut short is noticed. A small answer is
 one record. The answer is `application/puddle-sealed`; what is inside is what the route always answered.
 
-**Every answer to a request that authenticated is sealed**, refusals and errors included. The plain `404` to a stranger
-is not, so it stays byte for byte the answer to a path that doesn't exist. The answers that must look the same to
+**Every answer to a request that authenticated is sealed**, refusals and errors included, except a `204`, which has no
+body. The plain `404` to someone whose request didn't open is not, so it stays byte for byte the answer to a path that
+doesn't exist. A Pond seals its `404` to a request it opened but refuses (not a member): only it could, so a removed
+member can believe it (part 05). The answers that must look the same to
 everyone (`access`, `access/status`, part 03) are sealed too: sealing them gives nothing away, since only the asker can
 open them.
 
 **Downloads and `Range`.** A file is sealed record by record as it is read, so nothing is held in memory. A `Range`
-request is answered with the records that cover it, and `X-Puddle-Seal-Records: first=<index of the first record>`
-says where they start; the caller opens them and cuts out the bytes it asked for.
+request is answered `206` with the whole records that cover it; its `Content-Range` gives the plaintext range of those
+records (starting on a record boundary, so the first record's index is its start divided by 64 KiB), and the caller
+opens them and cuts out the bytes it asked for.
 
 ## Receipts lose `fp`
 

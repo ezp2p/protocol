@@ -29,7 +29,10 @@ A **stream** is the connection between two Puddles: private, peer to peer, both 
 
 ## Proving who answers
 
-Every route here but the four that set a stream up (`access`, `access/result`, `access/status`, `identity`) needs the
-handshake first (`GET /stream/v1/hello`, part 02). A caller holding the peer's key treats any answer without a good
-receipt as **not delivered**, keeps it, and tries again on its own schedule (Puddle: every five minutes for a day, then
-every thirty), telling its owner why ("didn't recognise us", "couldn't prove it's them", "intercepted").
+Every request is sealed to the peer's sealing key (part 09): the one in their chain, or, for a first request to an
+address, the `k` in their link (`puddle://home.example.org:8443?k=<key>&invite=<token>`; a bare address without one
+sends that single `access` request unsealed). A caller holding the peer's key treats any answer without a good receipt
+as **not delivered**, keeps it, and tries again on its own schedule (Puddle: every five minutes for a day, then every
+thirty), telling its owner why ("didn't recognise us", "couldn't prove it's them"). There is no handshake: nothing is
+sent that the wrong party could read. A request sealed to a key the peer has rolled away from is `409 stale_key`, with
+their chain in it.
