@@ -1,8 +1,8 @@
 # 05. Ponds: a Puddle and a community server
 
 A **Pond** is a community server, like a Discord server: channels, many members, history kept **on the Pond**. A
-member's Puddle caches what it has seen. There is no peer to peer here: members talk to the Pond, never to each other
-through it, and the Pond never calls a Puddle. The routes are `/pond/v1/...`; Pond's `api/pond.yaml` and
+member's Puddle caches what it has seen. There is no peer to peer here: members talk to the Pond, and the Pond never calls
+a Puddle. Two members may write to each other privately through it, as letters it passes on and can't read (part 10). The routes are `/pond/v1/...`; Pond's `api/pond.yaml` and
 `docs/design.md` have them in full.
 
 ## Joining and being a member
@@ -22,6 +22,9 @@ through it, and the Pond never calls a Puddle. The routes are `/pond/v1/...`; Po
   Puddles (part 03). A member sends one with `POST /pond/v1/pictures` (the bytes) before naming it in its profile; members
   fetch one that is shown (the icon, in `pond.icon`, or one in a member's profile) with `GET /pond/v1/pictures/{hash}`, and
   check it against what named it before showing it.
+
+- **Direct messages** (protocol 8, feature `dms`): letters between members, sealed from one Puddle to the other and
+  relayed by the Pond from memory, never kept (part 10, "Through a Pond"). A member's `dms` says whether they take them.
 
 ## Proving who answers, and sealing
 

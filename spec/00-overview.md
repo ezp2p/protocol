@@ -13,7 +13,7 @@
 - **Puddle to Puddle** (`/stream/v1/...`): streams, the private, peer-to-peer part. Part 03.
 - **Phone client to its Puddle** (`/api/v1/...` and `/device/v1/...`): the owner API, signed by a device key. Part 04.
 - **Puddle to Pond** (`/pond/v1/...`): a member and a community server. The Puddle always calls; the Pond never calls
-  a Puddle. Part 05.
+  a Puddle. Part 05. Members write to each other through it as letters (part 10).
 - **Puddle and its Levee** (`/levee/v1/...`): the Puddle attaches, and anyone calling the Puddle reaches the Levee. Part 06.
 
 Every party has an **Ed25519 identity**, and everything that matters is signed by it. Part 01.
