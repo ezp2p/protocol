@@ -17,6 +17,11 @@ through it, and the Pond never calls a Puddle. The routes are `/pond/v1/...`; Po
 - **Events**: one request held open on `GET /pond/v1/events?after=<cursor>` (up to 25 seconds). Because the Puddle
   always makes the connection, this works from behind NAT and through a Levee.
 - **What a Pond can do** is in `/pond/v1/info`: `protocol` (a number) and `features` (`files`, ...).
+- **Pictures** (protocol 6, feature `pictures`): the Pond's icon and the pictures in members' profiles are images of up to
+  1 MiB, named by the SHA-256 of their bytes as `{hash, mime, size}`, exactly as a profile names a picture between
+  Puddles (part 03). A member sends one with `POST /pond/v1/pictures` (the bytes) before naming it in its profile; members
+  fetch one that is shown (the icon, in `pond.icon`, or one in a member's profile) with `GET /pond/v1/pictures/{hash}`, and
+  check it against what named it before showing it.
 
 ## Proving who answers, and sealing
 
