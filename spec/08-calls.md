@@ -96,11 +96,11 @@ connection of the call; the others' frames come to the phone over the `frames` d
 that member's own count, big-endian; then the Opus frame. A member's video comes on the track `v<slot>`. A Puddle gives
 each other member in the call the smallest slot not held by another member in it now, so slots stay within 1 to 7.
 
-## Levee (part 06), later
+## Behind a Levee (part 06)
 
-A Puddle that can't be reached directly needs a relay, which a Levee would be: like a TURN server, it forwards the
-encrypted media and sees only its size and timing. Not specified yet; the signalling above needs no change for it,
-only candidates at the Levee.
+A Puddle behind a Levee can't be reached by UDP, so its media goes through its Levee's relay (a TURN server, part 06,
+"Calls: the relay"). It offers only relayed candidates and sends `udp: 0`, which tells the other side to add no
+candidates of its own making (from the address record) and use the SDP's alone. Nothing else in the signalling changes.
 
 ## Not yet
 

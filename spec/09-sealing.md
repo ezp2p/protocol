@@ -1,7 +1,7 @@
 # 09. Sealing: privacy that doesn't lean on TLS
 
 **Status:** built in Puddle (streams, phones, its Pond client) and Pond (protocol 5, feature `sealed`), 2026-11-18. Parts
-00, 02, 03, 04 and 05 describe it; part 06 (Levee, not built) is to be simplified by it. The decisions at the end were
+00, 02, 03, 04 and 05 describe it; part 06 (Levee) was rewritten on it. The decisions at the end were
 taken as recommended.
 
 ## Why

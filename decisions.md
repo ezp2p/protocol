@@ -31,21 +31,17 @@ give (accept, or which refusal). Each implementation's own tests load `vectors/*
 disagreement fails a build instead of a conversation. The vectors were made by Puddle's code, which is the reference
 until something here says otherwise.
 
-### Why not a shared library, yet
+### A shared library after all: libpuddle-proto (2026-11-21)
 
-- **The programs are built very differently on purpose.** Puddle is plain CMake with OpenSSL and libyaml and no other
-  dependencies, so it builds anywhere, a phone included. Pond is built on Drogon with MariaDB, Redis, jsoncpp and
-  yaml-cpp. A shared library would have to fit both build systems and both sets of dependencies, and would tie their
-  release cycles together: exactly the coupling the versioning rules exist to avoid.
-- **The shared part is small and stable.** Ids, the key chain, request signatures, receipts: a few hundred lines that
-  rarely change. Vectors guard that well; a library mostly saves typing.
-- **Two implementations agreeing is a feature.** When Pond's code, written from the text alone, passes the vectors,
-  the text is proven complete. A shared library would hide gaps in the text.
+Until Levee, the answer was no: Puddle and Pond were built apart on purpose, and two implementations agreeing proved the
+text complete. Levee made it three, and the owner chose the library first (2026-11-21). So `lib/` here is
+**libpuddle-proto**: C-callable, OpenSSL 3 only, no other dependency, built with CMake and pulled into a program with
+`add_subdirectory` (each program carries this repository as a git submodule). It holds ids, key chains, request
+signatures, receipts, custody receipts, sealing and pieces; nothing that is one program's own (keeping keys, phrases,
+routes, storage). Puddle, Pond and Levee all use it.
 
-**When to revisit:** when Levee is built. Levee must check chains, request signatures and receipts and sign custody
-receipts (`spec/06-levee.md`); if it is C++ like the others, extracting `libpuddle-proto` (C-callable, OpenSSL only:
-ids, chains, request signatures, receipts) from Puddle's `src/core/identity.cpp` and `src/http/reqsig.cpp` becomes worth
-it, as three copies of the same few hundred lines is one too many. The vectors stay either way.
+What keeps the text honest now that one implementation serves all three: the vectors stay, and the library is checked
+against them on every build (`lib/tests/proto_test.cpp`), so a change to the bytes still has to change a vector.
 
 ### Where this lives
 

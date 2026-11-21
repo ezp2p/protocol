@@ -53,6 +53,7 @@ that same hash as a big-endian number, modulo 1,000,000, as six digits with lead
 
 ## Levee ids
 
-A Levee has one Ed25519 key, like a Pond: its id is `base32(SHA-256("puddle-levee-v1\n" || public key))`. Part 06.
+A Levee has one Ed25519 key, like a Pond: its id is `base32(SHA-256("puddle-levee-v1\n" || public key))`, and its sealing
+key (part 09) is derived from the same seed with HKDF-SHA256, info `levee-seal-v1`. Part 06.
 
 Vectors: `vectors/devices.json` (device ids and check codes from fixed seeds).

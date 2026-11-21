@@ -8,12 +8,12 @@ their own pace, still understand each other.
 | **Puddle** (`ezp2p/puddle`) | Self-hosted chat with an identity, on the owner's computer | everything below |
 | **Phone client** (inside `ezp2p/puddle`) | A thin client of its owner's Puddle | devices |
 | **Pond** (`ezp2p/pond`) | A community server, like a Discord server. Its channels live on the Pond; Puddles cache them | identity, signatures, ponds |
-| **Levee** (`ezp2p/levee`) | A stable public front for one Puddle (or a few): spools while it is offline, keeps its address when it moves | identity, signatures, levee |
+| **Levee** (`ezp2p/levee`) | The public side of one Puddle: its address, spools while it is offline, carries what it sends, its files and its calls | identity, signatures, sealing, levee |
 | **Drip** (`ezp2p/drip`) | P2P social media (not designed yet) | identity, signatures, events; see `spec/07-drip.md` |
 
 ## What is here
 
-- [`decisions.md`](decisions.md): **why this exists, and what it is not** (no shared library yet). Read this first.
+- [`decisions.md`](decisions.md): **why this exists**, and why there is now a shared library. Read this first.
 - `spec/`: the protocol, one part per file. Where a part says MUST, it is a rule an implementation breaks at its peril.
   - [`00-overview.md`](spec/00-overview.md): the principles every part follows, and how the protocol is versioned
   - [`01-identity.md`](spec/01-identity.md): ids, keys, the key chain
@@ -21,11 +21,12 @@ their own pace, still understand each other.
   - [`03-streams.md`](spec/03-streams.md): Puddle to Puddle
   - [`04-devices.md`](spec/04-devices.md): a phone and its Puddle
   - [`05-ponds.md`](spec/05-ponds.md): a Puddle and a Pond
-  - [`06-levee.md`](spec/06-levee.md): a Puddle behind a Levee, and what that does to receipts
+  - [`06-levee.md`](spec/06-levee.md): a Puddle behind a Levee: joining, passing through, spooling, sending, files and calls
   - [`07-drip.md`](spec/07-drip.md): what Drip can take from all this
   - [`08-calls.md`](spec/08-calls.md): live voice and video between friends, and in groups
   - [`09-sealing.md`](spec/09-sealing.md): bodies sealed to keys, so TLS is transport only
   - [`10-letters.md`](spec/10-letters.md): messages sealed from one Puddle to another and carried by a third, such as a Pond
+- `lib/`: **libpuddle-proto**, the protocol's bytes in C for every program (`lib/include/puddle_proto.h`).
 - `vectors/`: test vectors: fixed keys, ids, signed requests and receipts, each with the answer an implementation must
   give. Every implementation's tests load them (Puddle: `protocol_vectors` test). A change to the wire changes a vector.
 
@@ -37,12 +38,12 @@ text; as parts settle here, those documents point here instead of repeating it.
 
 | Part | Puddle | Pond | Levee | Drip |
 |---|---|---|---|---|
-| identity, chains | built | built (its own code) | not built | - |
-| request signatures | built | built (its own code) | not built | - |
-| receipts (v2) | built | built (protocol 5) | designed here | - |
+| identity, chains | built | built | being built | - |
+| request signatures | built | built | being built | - |
+| receipts (v2) | built | built (protocol 5) | being built (custody receipts) | - |
 | sealing | built (phase 10) | built (protocol 5, feature `sealed`) | to carry it | - |
 | streams | built | - | passes them on | - |
 | devices | built (phase 7) | - | - | - |
 | ponds | built (member side) | built | passes them on | - |
-| levee | designed here | - | designed here | - |
+| levee | being built | - | being built | - |
 | calls | built: one to one (phase 8.1) | - | will relay them | - |

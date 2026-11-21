@@ -1,0 +1,13 @@
+{
+  "about": "Levees (spec/06-levee.md): from the seed (hex), the Ed25519 public key, the Levee's id, and its sealing key (HKDF-SHA256, no salt, info levee-seal-v1, then X25519); and custody receipts, which must check as `expect` for the Puddle `for`, the request's `nonce` and the SHA-256 of `body`.",
+  "seed": "6c65766565207365656420666f722074686520766563746f7273202e2e2e2e2e",
+  "public_key": "94aca8c8727b5b1a6b05113481df64ae893568a38ca326ac20b232e2bc5af7c3",
+  "id": "nk4dcmyy3hml447mq3hnsy6h5sthyy7ezae7mqluixmr4rnxxiva",
+  "seal_public_key": "a7c17db17fa5b20277a6fb41494a12eb8381eb1d1741e2a77f2046d1dd88723a",
+  "custody": [
+    {"name": "a good custody receipt", "for": "xbaaqzgzryy6hzq2czq6vyirhtinnk7tmkidavruesfno5sj6awa", "nonce": "AAECAwQFBgcICQoLDA0ODw==", "body": "sealed body", "header": "v1 for=xbaaqzgzryy6hzq2czq6vyirhtinnk7tmkidavruesfno5sj6awa; levee=nk4dcmyy3hml447mq3hnsy6h5sthyy7ezae7mqluixmr4rnxxiva; sig=raqoKyvtB3gGx9xzU8lISMi3blU7LZbovcH5xSF+5DbLbcO4qc60lC/Z2iMiyxDs9hkVK10y7CZ0cdnmsAU9Dg==", "expect": "ok"},
+    {"name": "another body", "for": "xbaaqzgzryy6hzq2czq6vyirhtinnk7tmkidavruesfno5sj6awa", "nonce": "AAECAwQFBgcICQoLDA0ODw==", "body": "another body", "header": "v1 for=xbaaqzgzryy6hzq2czq6vyirhtinnk7tmkidavruesfno5sj6awa; levee=nk4dcmyy3hml447mq3hnsy6h5sthyy7ezae7mqluixmr4rnxxiva; sig=raqoKyvtB3gGx9xzU8lISMi3blU7LZbovcH5xSF+5DbLbcO4qc60lC/Z2iMiyxDs9hkVK10y7CZ0cdnmsAU9Dg==", "expect": "bad"},
+    {"name": "for another Puddle", "for": "6qxmili24eyrwz3ovjjtml6zbxehkxwrhl2dm4ypu3p7pzecrtcq", "nonce": "AAECAwQFBgcICQoLDA0ODw==", "body": "sealed body", "header": "v1 for=xbaaqzgzryy6hzq2czq6vyirhtinnk7tmkidavruesfno5sj6awa; levee=nk4dcmyy3hml447mq3hnsy6h5sthyy7ezae7mqluixmr4rnxxiva; sig=raqoKyvtB3gGx9xzU8lISMi3blU7LZbovcH5xSF+5DbLbcO4qc60lC/Z2iMiyxDs9hkVK10y7CZ0cdnmsAU9Dg==", "expect": "wrong_key"},
+    {"name": "none", "for": "xbaaqzgzryy6hzq2czq6vyirhtinnk7tmkidavruesfno5sj6awa", "nonce": "AAECAwQFBgcICQoLDA0ODw==", "body": "sealed body", "header": "", "expect": "missing"}
+  ]
+}
