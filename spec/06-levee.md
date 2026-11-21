@@ -72,8 +72,10 @@ The Puddle's own requests to `/levee/v1/...` carry a request signature (part 02)
 `X-Levee-Signature` (same format, same signed text), because on `send` the Puddle's request to someone else travels in
 the same request with its own `X-Puddle-Signature`. Anything that fails: plain `404`, like an unknown path.
 
-Only `attach` is sealed: it is the one answer with something private in it. The others carry either what is already
-sealed end to end (requests and answers between the Puddle and others) or nothing worth hiding from a carrier.
+What is the Levee's own to read is sealed to it (part 09), as a request to anyone is: `attach` (whose answer is sealed
+back), `peers` and a file's `ready`. The rest carry what is already sealed end to end (requests and answers between the
+Puddle and others, and files under their own keys), so they go as they are. The Levee signs a receipt (part 02) on
+`attach` alone, the one answer the Puddle has to believe.
 
 ## Coming in
 
@@ -88,7 +90,7 @@ receipt).
 
 The Puddle tells the Levee who may reach it, and again whenever that changes:
 
-    POST /levee/v1/peers  {"peers": [{"id": "...", "chain": [...]}, ...], "devices": [{"id": "...", "key": "<base64>"}, ...]}
+    POST /levee/v1/peers  (sealed) {"peers": [{"id": "...", "chain": [...]}, ...], "devices": [{"id": "...", "key": "<base64>"}, ...]}
 
 `peers`: everyone with a stream the Puddle would take requests from; `devices`: its paired phones (part 04). The Levee
 is the owner's own, so it may know the owner's friends; it keeps the list in its data folder and never passes it on.
@@ -187,7 +189,7 @@ at index `p × 64 + k` (`p` for `hashes` is 2^40), with status `0`, the last rec
 The Puddle puts them:
 
     POST /levee/v1/files/<file>/<piece>        the sealed piece as the body; piece is "hashes" or a number
-    POST /levee/v1/files/<file>/ready  {"for": ["<peer id>", ...]}
+    POST /levee/v1/files/<file>/ready  (sealed) {"for": ["<peer id>", ...]}
 
 `ready` says the file is complete and who may fetch it; the Levee checks it holds every piece. A file is at most
 `files.max_size` on the Levee (its config).
