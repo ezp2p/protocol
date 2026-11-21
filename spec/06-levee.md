@@ -96,11 +96,13 @@ The Puddle tells the Levee who may reach it, and again whenever that changes:
 is the owner's own, so it may know the owner's friends; it keeps the list in its data folder and never passes it on.
 Answered `204`.
 
-**While the Puddle is attached** (it has held a request on `inbox` in the last 30 seconds), the request is handed over at
-once and the Levee waits up to 30 seconds for the Puddle's answer, which it passes back byte for byte: status, body and
+**While the Puddle is attached** (below), the request is handed over at
+once and the Levee waits up to 8 seconds for the Puddle's answer (less than a caller waits for any reply), which it passes back byte for byte: status, body and
 the headers `X-Puddle-Receipt`, `Content-Type`, `Content-Range`. Nothing else in the stream protocol changes: the
-receipt is the Puddle's own (part 02), which holds over any connection. No answer in time: plain `404`, so the sender
-tries again as it would against an offline Puddle.
+receipt is the Puddle's own (part 02), which holds over any connection. No answer in time (the Puddle went away
+meanwhile): a one-way request is spooled and answered as below; anything else is a plain `404`, so the sender tries again
+as it would against an offline Puddle. A Puddle counts as attached while a request of its own waits on `inbox` over a
+connection still open, or for 10 seconds after one was answered.
 
 **While it is not**, a **one-way** request (the table below) is spooled, and answered:
 
