@@ -52,6 +52,28 @@ holds the history, so it is the Pond, not the author's Puddle, that changes it; 
   A Puddle that copied a message before it was edited or deleted may still hold it: deleting is a request to hide, not an
   erase, as between Puddles (Puddle's `docs/storage.md`).
 
+## Replies, reactions and mentions
+
+Protocol 15 of `/pond/v1`, the features `replies`, `reactions` and `mentions` (Pond's `docs/design.md`, "Replies, reactions and
+mentions"). As with edits, the Pond holds what a message says and answers for it; nothing here is signed by the author yet.
+
+- **Replies.** A send may name `reply_to`, a message in the same channel that is not deleted. The reply then carries `reply`: a
+  quote of that message *as it reads now*, `{id, author, text, files?}` (`text` its first 200 characters, `files` how many it
+  carries), or only `{id, deleted: true}` once it is deleted. When the message replied to is edited or deleted, the Pond
+  rewrites the earlier events of its replies too, so no quote keeps what was taken back. A Puddle that holds both keeps the
+  quote in step from `message_edited` and `message_deleted` itself.
+- **Reactions.** `POST .../messages/{message}/react {emoji}` and `/unreact`, for a member the channel lets `add_reactions`.
+  An emoji is 1 to 32 bytes of UTF-8 with no ASCII and no control characters, compared byte for byte; each member uses each
+  once; a message holds at most 20 different ones. A message carries `reactions`, `[{emoji, count, members}]`. The event
+  `message_reactions` (`{id, channel, reactions}`) says a message's reactions as they are now, and the Pond rewrites every
+  earlier event about the message to say the same, so whatever a Puddle reads last is right.
+- **Mentions.** Written in the text as `<@member id>`, `<@&role id>` and `@everyone`; ids, never names, so a mention still
+  reads right after a rename. The Pond works out what a message mentions when it is sent or edited and gives it as
+  `mentions` (`{members?, roles?, everyone?}`): members who are in the Pond; roles and everyone only from a member the channel
+  lets `mention_everyone`. The Pond tells nobody itself: the member's Puddle receives the message like any other, highlights
+  it, and tells its owner when it names them, a role they hold, or everyone. A Puddle tells its owner only of new messages,
+  not of edits.
+
 ## Later (protocol, not built)
 
 - **Messages signed by their authors**, so a Pond can't forge what a member said (members trust the Pond for what it
