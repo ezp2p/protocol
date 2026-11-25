@@ -293,9 +293,10 @@ static int receipt_canonical(char *out, size_t cap, const char *id, const char *
     return (n > 0 && (size_t)n < cap) ? n : -1;
 }
 
-static int custody_canonical(char *out, size_t cap, const char *for_id, const char *levee_id, const char *nonce, const char *body_hash)
+static int custody_canonical(char *out, size_t cap, const char *for_id, const char *levee_id, const char *nonce, const char *body_hash,
+                             const char *label = "puddle-custody-v1")
 {
-    int n = snprintf(out, cap, "puddle-custody-v1\n%s\n%s\n%s\n%s", for_id, levee_id, nonce, body_hash);
+    int n = snprintf(out, cap, "%s\n%s\n%s\n%s\n%s", label, for_id, levee_id, nonce, body_hash);
     return (n > 0 && (size_t)n < cap) ? n : -1;
 }
 
@@ -373,6 +374,46 @@ pp_receipt_check pp_custody_verify(const char *header, const char *for_id, const
         return PP_RECEIPT_WRONG_KEY;
     char canon[400];
     int cl = custody_canonical(canon, sizeof canon, vals[0], vals[1], nonce, body_hash_hex);
+    if (cl < 0 || !pp_ed25519_verify(levee_pub, canon, (size_t)cl, sig))
+        return PP_RECEIPT_BAD;
+    return PP_RECEIPT_OK;
+}
+
+/* the same text under another label: the Levee takes back exactly what it took (spec/06, "When the Levee gives up") */
+static const char *const kUndeliveredLabel = "puddle-undelivered-v1";
+
+int pp_undelivered_sign(const pp_signer *s, const char *for_id, const char *nonce, const char *body_hash_hex, char *out, size_t cap)
+{
+    if (!s || !s->id || !s->sign || !pp_id_valid(for_id) || !pp_id_valid(s->id) || !nonce || !*nonce || strlen(nonce) > 60 ||
+        !is_hex64(body_hash_hex))
+        return -1;
+    char canon[400];
+    unsigned char sig[64];
+    int cl = custody_canonical(canon, sizeof canon, for_id, s->id, nonce, body_hash_hex, kUndeliveredLabel);
+    if (cl < 0 || s->sign(s->user, canon, (size_t)cl, sig) != 0 || !pp_base64_encode(sig, 64, out, cap))
+        return -1;
+    return 0;
+}
+
+pp_receipt_check pp_undelivered_verify(const char *sig_b64, const char *for_id, const char *levee_id, const unsigned char levee_pub[32],
+                                       const char *nonce, const char *body_hash_hex)
+{
+    if (!is_hex64(body_hash_hex))
+        return PP_RECEIPT_BAD;
+    if (!sig_b64 || !*sig_b64)
+        return PP_RECEIPT_MISSING;
+    if (!pp_id_valid(for_id) || !pp_id_valid(levee_id) || !levee_pub || !nonce || !*nonce || strlen(nonce) > 60 || strlen(sig_b64) > 100)
+        return PP_RECEIPT_BAD;
+    char want[PP_ID_LEN + 1];
+    pp_key_id_b32(PP_LABEL_LEVEE, levee_pub, want);
+    if (strcmp(want, levee_id) != 0)
+        return PP_RECEIPT_WRONG_KEY;
+    unsigned char sig[72];
+    size_t sl = 0;
+    if (pp_base64_decode(sig_b64, sig, sizeof sig, &sl) != 0 || sl != 64)
+        return PP_RECEIPT_BAD;
+    char canon[400];
+    int cl = custody_canonical(canon, sizeof canon, for_id, levee_id, nonce, body_hash_hex, kUndeliveredLabel);
     if (cl < 0 || !pp_ed25519_verify(levee_pub, canon, (size_t)cl, sig))
         return PP_RECEIPT_BAD;
     return PP_RECEIPT_OK;

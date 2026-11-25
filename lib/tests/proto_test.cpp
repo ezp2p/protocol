@@ -357,13 +357,28 @@ static void test_levee(void)
     wrong[0] ^= 1;
     CHECK(pp_custody_verify(hdr, puddle, id, wrong, nonce, h) == PP_RECEIPT_WRONG_KEY);
 
+    /* giving up: the custody text under another label, so neither signature passes for the other */
+    char und[100];
+    CHECK(pp_undelivered_sign(&s, puddle, nonce, h, und, sizeof und) == 0);
+    const char *custody_sig = strstr(hdr, "sig=") + 4;
+    CHECK(pp_undelivered_verify(und, puddle, id, pub, nonce, h) == PP_RECEIPT_OK);
+    CHECK(pp_undelivered_verify(custody_sig, puddle, id, pub, nonce, h) == PP_RECEIPT_BAD);
+    CHECK(strcmp(und, custody_sig) != 0);
+    CHECK(pp_undelivered_verify(und, puddle, id, pub, nonce, other) == PP_RECEIPT_BAD);
+    CHECK(pp_undelivered_verify(und, puddle, id, pub, "AAECAwQFBgcICQoLDA0ODg==", h) == PP_RECEIPT_BAD);
+    CHECK(pp_undelivered_verify(und, "6qxmili24eyrwz3ovjjtml6zbxehkxwrhl2dm4ypu3p7pzecrtcq", id, pub, nonce, h) == PP_RECEIPT_BAD);
+    CHECK(pp_undelivered_verify(und, puddle, id, wrong, nonce, h) == PP_RECEIPT_WRONG_KEY);
+    CHECK(pp_undelivered_verify("", puddle, id, pub, nonce, h) == PP_RECEIPT_MISSING);
+    CHECK(pp_undelivered_verify("bm90IGEgc2lnbmF0dXJl", puddle, id, pub, nonce, h) == PP_RECEIPT_BAD);
+
     /* the vectors: what another implementation must make from the same seed */
     std::string j = slurp(vectors_dir + "/levee.json");
     const char *w = getenv("PP_WRITE_VECTORS");
     if (w && *w) {
         std::string out = "{\n  \"about\": \"Levees (spec/06-levee.md): from the seed (hex), the Ed25519 public key, the Levee's id, and its sealing key "
                           "(HKDF-SHA256, no salt, info levee-seal-v1, then X25519); and custody receipts, which must check as `expect` for the "
-                          "Puddle `for`, the request's `nonce` and the SHA-256 of `body`.\",\n";
+                          "Puddle `for`, the request's `nonce` and the SHA-256 of `body`; and `undelivered`, the `sig` of one item of a notice that "
+                          "the Levee gave up (POST /stream/v1/undelivered), checked the same way.\",\n";
         out += "  \"seed\": \"" + hexs(kLeveeSeed, 32) + "\",\n  \"public_key\": \"" + hexs(pub, 32) + "\",\n  \"id\": \"" + id +
                "\",\n  \"seal_public_key\": \"" + hexs(pk, 32) + "\",\n  \"custody\": [\n";
         out += "    {\"name\": \"a good custody receipt\", \"for\": \"" + std::string(puddle) + "\", \"nonce\": \"" + nonce +
@@ -373,7 +388,16 @@ static void test_levee(void)
         out += "    {\"name\": \"for another Puddle\", \"for\": \"6qxmili24eyrwz3ovjjtml6zbxehkxwrhl2dm4ypu3p7pzecrtcq\", \"nonce\": \"" +
                std::string(nonce) + "\", \"body\": \"sealed body\", \"header\": \"" + hdr + "\", \"expect\": \"wrong_key\"},\n";
         out += "    {\"name\": \"none\", \"for\": \"" + std::string(puddle) + "\", \"nonce\": \"" + nonce +
-               "\", \"body\": \"sealed body\", \"header\": \"\", \"expect\": \"missing\"}\n  ]\n}\n";
+               "\", \"body\": \"sealed body\", \"header\": \"\", \"expect\": \"missing\"}\n  ],\n  \"undelivered\": [\n";
+        auto item = [&](const char *name, const char *for_id, const char *body, const char *sig, const char *expect) {
+            return "    {\"name\": \"" + std::string(name) + "\", \"for\": \"" + for_id + "\", \"nonce\": \"" + nonce + "\", \"body\": \"" +
+                   body + "\", \"sig\": \"" + sig + "\", \"expect\": \"" + expect + "\"}";
+        };
+        out += item("a good notice", puddle, "sealed body", und, "ok") + ",\n";
+        out += item("another body", puddle, "another body", und, "bad") + ",\n";
+        out += item("for another Puddle", "6qxmili24eyrwz3ovjjtml6zbxehkxwrhl2dm4ypu3p7pzecrtcq", "sealed body", und, "bad") + ",\n";
+        out += item("the custody receipt's signature", puddle, "sealed body", custody_sig, "bad") + ",\n";
+        out += item("none", puddle, "sealed body", "", "missing") + "\n  ]\n}\n";
         FILE *f = fopen((std::string(w) + "/levee.json").c_str(), "wb");
         CHECK(f != NULL);
         if (f) {
@@ -398,6 +422,18 @@ static void test_levee(void)
         count++;
     }
     CHECK(count == 4);
+    count = 0;
+    for (pp_span it : items(t, n, "undelivered")) {
+        std::string body = str(it.p, it.len, "body"), expect = str(it.p, it.len, "expect");
+        char bh[65];
+        pp_sha256_hex(body.data(), body.size(), bh);
+        pp_receipt_check c = pp_undelivered_verify(str(it.p, it.len, "sig").c_str(), str(it.p, it.len, "for").c_str(), id, pub,
+                                                   str(it.p, it.len, "nonce").c_str(), bh);
+        const char *got = c == PP_RECEIPT_OK ? "ok" : c == PP_RECEIPT_MISSING ? "missing" : c == PP_RECEIPT_WRONG_KEY ? "wrong_key" : "bad";
+        CHECK(expect == got);
+        count++;
+    }
+    CHECK(count == 5);
 }
 
 /* ------------------------------------------------------------------ round trips */

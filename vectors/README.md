@@ -6,7 +6,7 @@ beside yours (`../protocol/vectors`).
 | File | Spec | What an implementation must do |
 |---|---|---|
 | `devices.json` | 01, device ids | from each `seed`, make the Ed25519 key: its `public_key`, device `id` and six-digit `check` must match |
-| `levee.json` | 01, 06 | from the `seed`, a Levee's Ed25519 `public_key`, its `id` and its sealing key (`seal_public_key`); and `custody`: check each `header` as a custody receipt from that Levee for the Puddle `for`, the request's `nonce` and the SHA-256 of `body`; say `ok`, `missing`, `wrong_key` or `bad` |
+| `levee.json` | 01, 06 | from the `seed`, a Levee's Ed25519 `public_key`, its `id` and its sealing key (`seal_public_key`); and `custody`: check each `header` as a custody receipt from that Levee for the Puddle `for`, the request's `nonce` and the SHA-256 of `body`; say `ok`, `missing`, `wrong_key` or `bad`; and `undelivered`: check each `sig` as one item of that Levee's notice that it gave up on the request (`POST /stream/v1/undelivered`), likewise |
 | `signatures.json` | 02 | `requests`: authenticate `header` for a request with that `method`, `target` and `body`, as the Puddle `checked_by` (or, with `accepts_any`, as anyone: recipient `*`), at `now_ms`, knowing only `sender`'s key; say `ok`, `reject` (the plain `404`) or `clock_skew`. `receipts`: check `header` as the caller of a request with that `nonce`, given `status`, `body` and the certificate it saw (`seen_fp`), knowing `responder`'s key; say `ok`, `missing`, `wrong_key`, `bad` or `other_cert` |
 
 Keys are given as hex in the files; in the headers they are as `spec/02-signatures.md` says.
