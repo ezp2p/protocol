@@ -76,3 +76,15 @@ The certificate was only in receipts because TLS was the only thing keeping bodi
 keys do that too: every request body is sealed (HPKE, RFC 9180) to the recipient's encryption key, every answer back to
 the caller, and receipts stop naming a certificate. Then a certificate can be anything, and change any time, and a
 proxy or a Levee sees routes and sizes but no contents. Open questions, with recommendations, are at the end of part 09.
+
+## Levee's open questions (2026-11-25)
+
+See `spec/06-levee.md`, "Settled with the owner". Decided with the owner: one Levee for one Puddle, both ways, and no
+spare (no gain worth the complexity); friends always reach a Puddle through its Levee, never directly; certificate
+pinning is gone with part 09. What a Levee takes in custody and then gives up on (its spool's age limit, or the Puddle
+detaching) is **told to both ends**: the sender gets a notice signed by the Levee (`POST /stream/v1/undelivered`) and
+counts the request as not delivered, and the Puddle gets a list on its next attach. The sender's owner then resends or
+deletes the message once the recipient is back. This adds `addresses` and `levee` to the entries of `peers`, so the
+Levee can reach a sender, including one behind a Levee of its own.
+
+The section "Receipts through a Levee" above is superseded: since part 09 no receipt names a certificate.
