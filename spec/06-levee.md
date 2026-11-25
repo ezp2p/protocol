@@ -169,7 +169,7 @@ have answered, and the answer as the body. `204`, or `404` if no such live reque
 Everything spooled is handed to the Puddle the next time it attaches, in the order it came. The Levee gives up on a
 spooled request only when the operator's limit runs out (`spool.keep_days`, 30 by default), or when the Puddle detaches.
 A custody receipt promised the sender delivery, so giving up is said out loud, to both ends. *(Decided with the owner
-2026-11-25; not built yet.)*
+2026-11-25; built: libpuddle-proto's `pp_undelivered_sign` and `pp_undelivered_verify`, vectors in `levee.json`.)*
 
 **The sender** is told, if it is in `peers` with `addresses`:
 
@@ -186,10 +186,12 @@ Each `sig` is Ed25519 by the Levee's key over:
     <the request's nonce>
     <hex SHA-256 of the request's body as sent>
 
-The text is the custody receipt's, under another label: the Levee takes back exactly what it took. The request has no
-`X-Puddle-Signature` (a Levee is no Puddle); each item's `sig` is the proof. The sender checks each `sig` against the
-key of the Levee whose custody receipt it holds for that nonce, and ignores items it holds no such receipt for. Answered
-`204`, with no receipt. The Levee sends it to the sender's newest address (`levee` set: that is the sender's own
+The text is the custody receipt's, under another label: the Levee takes back exactly what it took. The request is
+signed (part 02) by the Levee under its own id, for the sender's id: sealing needs a sender and a nonce, and the
+signature is how the sender's own Levee knows it is a peer's Levee. The sender takes the key from the custody receipts
+it holds from that Levee. Each item's `sig` is the proof that counts: the sender checks it against the key of the
+Levee whose custody receipt it holds for that nonce, and ignores items it holds no such receipt for. Answered `204`,
+with no receipt, whatever it named. The Levee sends it to the sender's newest address (`levee` set: that is the sender's own
 Levee, which takes it from a peer's Levee it knows of and spools it like any one-way request), retrying as an outbox
 would, and forgets a notice nobody took within `spool.keep_days`.
 
