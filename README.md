@@ -1,49 +1,23 @@
 # The Puddle Protocol
 
-What every ezp2p program says on the wire, written down once, so programs built apart, in their own code, upgraded at
-their own pace, still understand each other.
+What every ezp2p program says on the wire, written down once, so that programs built apart, in their own code and
+upgraded at their own pace, still understand each other.
 
-| Program | What it is | Speaks |
-|---|---|---|
-| **Puddle** (`ezp2p/puddle`) | Self-hosted chat with an identity, on the owner's computer | everything below |
-| **Phone client** (inside `ezp2p/puddle`) | A thin client of its owner's Puddle | devices |
-| **Pond** (`ezp2p/pond`) | A community server, like a Discord server. Its channels live on the Pond; Puddles cache them | identity, signatures, ponds |
-| **Levee** (`ezp2p/levee`) | The public side of one Puddle: its address, spools while it is offline, carries what it sends, its files and its calls | identity, signatures, sealing, levee |
-| **Drip** (`ezp2p/drip`) | P2P social media (not designed yet) | identity, signatures, events; see `spec/07-drip.md` |
+## The specification
+
+The protocol's text is on the website wiki: **[Protocol](https://www.ezp2p.org/wiki/protocol/)**, one page per part
+(overview, identity, signatures, streams, devices, ponds, levee, drip, calls, sealing, letters). Its source is in
+`ezp2p/website` under `src/wiki/protocol/`. Why the protocol is its own repository, and why it has a shared library,
+is under [Decisions: Protocol](https://www.ezp2p.org/wiki/decisions/protocol/).
+
+A change to the wire changes the wiki page, here, and a vector together. Code and specs that name `spec/NN-name.md`
+mean the wiki page `protocol/name`.
 
 ## What is here
 
-- [`decisions.md`](decisions.md): **why this exists**, and why there is now a shared library. Read this first.
-- `spec/`: the protocol, one part per file. Where a part says MUST, it is a rule an implementation breaks at its peril.
-  - [`00-overview.md`](spec/00-overview.md): the principles every part follows, and how the protocol is versioned
-  - [`01-identity.md`](spec/01-identity.md): ids, keys, the key chain
-  - [`02-signatures.md`](spec/02-signatures.md): request signatures and answer receipts, byte for byte
-  - [`03-streams.md`](spec/03-streams.md): Puddle to Puddle
-  - [`04-devices.md`](spec/04-devices.md): a phone and its Puddle
-  - [`05-ponds.md`](spec/05-ponds.md): a Puddle and a Pond
-  - [`06-levee.md`](spec/06-levee.md): a Puddle behind a Levee: joining, passing through, spooling, sending, files and calls
-  - [`07-drip.md`](spec/07-drip.md): what Drip can take from all this
-  - [`08-calls.md`](spec/08-calls.md): live voice and video between friends, and in groups
-  - [`09-sealing.md`](spec/09-sealing.md): bodies sealed to keys, so TLS is transport only
-  - [`10-letters.md`](spec/10-letters.md): messages sealed from one Puddle to another and carried by a third, such as a Pond
-- `lib/`: **libpuddle-proto**, the protocol's bytes in C for every program (`lib/include/puddle_proto.h`).
+- `lib/`: **libpuddle-proto**, the protocol's bytes in C for every program (`lib/include/puddle_proto.h`). Puddle, Pond
+  and Levee carry this repository as the submodule `third_party/protocol`.
 - `vectors/`: test vectors: fixed keys, ids, signed requests and receipts, each with the answer an implementation must
-  give. Every implementation's tests load them (Puddle: `protocol_vectors` test). A change to the wire changes a vector.
+  give. Every implementation's tests load them (Puddle's `protocol_vectors` test). A change to the wire changes a vector.
 
-## Status
-
-This is the first cut (2026-11-12), written from what Puddle and Pond do today. Puddle's `docs/streams.md`,
-`docs/identity.md` and `api/federation.yaml`, and Pond's `docs/design.md` and `api/pond.yaml`, still hold the fuller
-text; as parts settle here, those documents point here instead of repeating it.
-
-| Part | Puddle | Pond | Levee | Drip |
-|---|---|---|---|---|
-| identity, chains | built | built | being built | - |
-| request signatures | built | built | being built | - |
-| receipts (v2) | built | built (protocol 5) | being built (custody receipts) | - |
-| sealing | built (phase 10) | built (protocol 5, feature `sealed`) | to carry it | - |
-| streams | built | - | passes them on | - |
-| devices | built (phase 7) | - | - | - |
-| ponds | built (member side) | built | passes them on | - |
-| levee | being built | - | being built | - |
-| calls | built: one to one (phase 8.1) | - | will relay them | - |
+Work still to do is on the [project board](https://github.com/orgs/ezp2p/projects/1).
