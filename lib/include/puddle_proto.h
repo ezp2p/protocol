@@ -173,6 +173,14 @@ int pp_custody_sign(const pp_signer *s, const char *for_id, const char *nonce, c
 pp_receipt_check pp_custody_verify(const char *header, const char *for_id, const char *levee_id, const unsigned char levee_pub[32],
                                    const char *nonce, const char *body_hash_hex);
 
+/* "When the Levee gives up" (spec/06): one item's `sig` in POST /stream/v1/undelivered, base64 of the Ed25519 signature
+ * by the Levee (`s`) over the custody text under the label puddle-undelivered-v1. */
+int pp_undelivered_sign(const pp_signer *s, const char *for_id, const char *nonce, const char *body_hash_hex, char *out, size_t cap);
+/* Did the Levee `levee_id`, whose key is `levee_pub`, give up on that request for `for_id`? MISSING for an empty `sig`,
+ * WRONG_KEY when the key isn't that Levee's. */
+pp_receipt_check pp_undelivered_verify(const char *sig_b64, const char *for_id, const char *levee_id, const unsigned char levee_pub[32],
+                                       const char *nonce, const char *body_hash_hex);
+
 /* ------------------------------------------------------------------ sealing (spec/09) */
 
 #define PP_SEAL_KEY_LEN 32
