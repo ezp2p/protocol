@@ -25,6 +25,7 @@ their own pace, still understand each other.
   - [`07-drip.md`](spec/07-drip.md): what Drip can take from all this
   - [`08-calls.md`](spec/08-calls.md): live voice and video between friends, and in groups
   - [`09-sealing.md`](spec/09-sealing.md): bodies sealed to keys, so TLS is transport only
+  - [`11-end-to-end.md`](spec/11-end-to-end.md): message content encrypted where it is written, to the Puddles in the chat (draft)
 - `vectors/`: test vectors: fixed keys, ids, signed requests and receipts, each with the answer an implementation must
   give. Every implementation's tests load them (Puddle: `protocol_vectors` test). A change to the wire changes a vector.
 
